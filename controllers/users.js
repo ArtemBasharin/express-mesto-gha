@@ -1,19 +1,17 @@
 const User = require('../models/user');
 
 module.exports.getUsers = (req, res) => {
-  User.find({})
-    .then((users) => res.status(200).send({ data: users }))
+  User.find({}, { __v: 0 })
+    .then((users) => res.status(200).send(users))
     .catch(() => res.status(500).send({ message: 'Ошибка на сервере' }));
 };
 
 module.exports.getUser = (req, res) => {
-  User.findById(req.params.userId)
+  User.findById(req.params.userId, { __v: 0 })
     .orFail(new Error('NotValidId'))
     .then((user) => res.status(200).send(user))
     .catch((err) => {
-      if (err.message === 'NotValidId') {
-        res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
-      } else if (err.name === 'CastError') {
+      if (err.message === 'NotValidId' || err.name === 'CastError') {
         res.status(404).send({ message: 'Запрашиваемый пользователь не найден' });
       } else {
         res.status(500).send({ message: 'Ошибка на сервере' });
