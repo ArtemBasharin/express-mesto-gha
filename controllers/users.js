@@ -14,7 +14,7 @@ module.exports.getUser = (req, res) => {
       if (err.message === 'NotValidId') {
         res
           .status(404)
-          .send({ message: 'Пользователь с указанным id не найден' });
+          .send({ message: 'Запрашиваемый пользователь не найден' });
       } else {
         res.status(500).send({ message: 'Ошибка на сервере' });
       }
