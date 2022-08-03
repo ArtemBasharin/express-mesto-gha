@@ -12,7 +12,7 @@ module.exports.getUser = (req, res) => {
     .then((user) => res.status(200).send(user))
     .catch((err) => {
       if (err.message === 'NotValidId' || err.name === 'CastError') {
-        res.status(404).send({ message: 'Пользователь с указанным id не найден' });
+        res.status(400).send({ message: 'Пользователь с указанным id не найден' });
       } else {
         res.status(500).send({ message: 'Ошибка на сервере' });
       }
