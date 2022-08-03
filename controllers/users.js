@@ -1,7 +1,7 @@
 const {
-  BAD_REQUEST,
-  NOT_FOUND,
-  INTERNAL_SERVER_ERROR,
+  badRequest,
+  pageNotFound,
+  internalServerError,
 } = require('../errors');
 
 const User = require('../models/user');
@@ -9,22 +9,22 @@ const User = require('../models/user');
 const getUsers = (_, res) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' }));
+    .catch(() => res.status(internalServerError).send({ message: 'На сервере произошла ошибка' }));
 };
 
 const getUserById = (req, res) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return res.status(NOT_FOUND).send({ message: 'Пользователь по указанному id не найден' });
+        return res.status(pageNotFound).send({ message: 'Запрашиваемый пользователь не найден' });
       }
       return res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(BAD_REQUEST).send({ message: 'Передан невалидный id пользователя' });
+        return res.status(badRequest).send({ message: 'Передан не верный id пользователя' });
       }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+      return res.status(internalServerError).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
@@ -35,9 +35,9 @@ const createUser = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(BAD_REQUEST).send({ message: 'При создании нового пользователя переданы невалидные данные' });
+        return res.status(badRequest).send({ message: 'При создании пользователя переданы не верные данные' });
       }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+      return res.status(internalServerError).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
@@ -48,9 +48,9 @@ const updateUserInfo = (req, res) => {
     .then((user) => res.send({ data: user }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(BAD_REQUEST).send({ message: 'При обновлении данных пользователя переданы невалидные данные' });
+        return res.status(badRequest).send({ message: 'При обновлении данных пользователя переданы не верные данные' });
       }
-      return res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+      return res.status(internalServerError).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
@@ -60,7 +60,7 @@ const updateUserAvatar = (req, res) => {
   User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
     .then((user) => res.send({ data: user }))
     .catch(() => {
-      res.status(INTERNAL_SERVER_ERROR).send({ message: 'На сервере произошла ошибка' });
+      res.status(internalServerError).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
