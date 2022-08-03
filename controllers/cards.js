@@ -17,7 +17,7 @@ const postCard = (req, res) => {
   const owner = req.user._id;
 
   Card.create({ name, link, owner })
-    .then((card) => res.send({ data: card }))
+    .then((card) => res.status(201).send(card))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'Данные новой карточки невалидны' });
