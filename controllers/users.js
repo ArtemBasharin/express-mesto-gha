@@ -32,7 +32,7 @@ const createUser = (req, res) => {
   const { name, about, avatar } = req.body;
 
   User.create({ name, about, avatar })
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.status(201).send(user))
     .catch((err) => {
       if (err.name === 'ValidationError') {
         return res.status(badRequest).send({ message: 'При создании пользователя переданы не верные данные' });
@@ -43,24 +43,34 @@ const createUser = (req, res) => {
 
 const updateUserInfo = (req, res) => {
   const { name, about } = req.body;
-
   User.findByIdAndUpdate(req.user._id, { name, about }, { runValidators: true, new: true })
+    .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
     .catch((err) => {
-      if (err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: 'При обновлении данных пользователя переданы не верные данные' });
+      if (err.message === 'NotValidId' || err.name === 'CastError') {
+        res.status(pageNotFound).send({ message: 'Пользователь с указанным id не найден' });
+      } else if (err.name === 'ValidationError') {
+        res.status(badRequest).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+      } else {
+        res.status(internalServerError).send({ message: 'Ошибка на сервере' });
       }
-      return res.status(internalServerError).send({ message: 'На сервере произошла ошибка' });
     });
 };
 
 const updateUserAvatar = (req, res) => {
   const { avatar } = req.body;
 
-  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
+  User.findByIdAndUpdate(req.user._id, { avatar }, { runValidators: true, new: true })
+    .orFail(new Error('NotValidId'))
     .then((user) => res.send({ data: user }))
-    .catch(() => {
-      res.status(internalServerError).send({ message: 'На сервере произошла ошибка' });
+    .catch((err) => {
+      if (err.message === 'NotValidId' || err.name === 'CastError') {
+        res.status(pageNotFound).send({ message: 'Пользователь с указанным id не найден' });
+      } else if (err.name === 'ValidationError') {
+        res.status(badRequest).send({ message: 'Переданы некорректные данные при обновлении профиля' });
+      } else {
+        res.status(internalServerError).send({ message: 'Ошибка на сервере' });
+      }
     });
 };
 

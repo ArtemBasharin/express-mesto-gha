@@ -1,5 +1,12 @@
+/* eslint-disable no-unused-vars */
 const express = require('express');
 const mongoose = require('mongoose');
+
+const {
+  badRequest,
+  pageNotFound,
+  internalServerError,
+} = require('./errors');
 
 const usersRouter = require('./routes/users');
 const cardsRouter = require('./routes/cards');
@@ -24,7 +31,7 @@ app.use(usersRouter);
 app.use(cardsRouter);
 
 app.use('/', (req, res) => {
-  res.status(404).send({ message: 'Произошла ошибка' });
+  res.status(pageNotFound).send({ message: 'Произошла ошибка' });
 });
 
 app.listen(PORT, () => {
