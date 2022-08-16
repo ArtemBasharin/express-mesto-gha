@@ -1,126 +1,117 @@
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
-const {
-  badRequest,
-  pageNotFound,
-  internalServerError,
-  authorizationError,
-} = require('../errors');
+const PageNotFound = require('../errors/PageNotFound');
+const BadReqErr = require('../errors/BadReqErr');
+const AuthErr = require('../errors/AuthErr');
+const ConflictReqErr = require('../errors/ConflictReqErr');
 
 const User = require('../models/user');
 
-const getUsers = (_, res) => {
+const getUsers = (_, res, next) => {
   User.find({})
     .then((users) => res.send({ data: users }))
-    .catch(() => res.status(internalServerError).send({ message: 'Внутренняя ошибка сервера' }));
+    .catch(next);
 };
 
-const getUserById = (req, res) => {
+const getUserById = (req, res, next) => {
   User.findById(req.params.userId)
     .then((user) => {
       if (!user) {
-        return res.status(pageNotFound).send({ message: 'Запрашиваемый пользователь не найден' });
+        return next(new PageNotFound('Пользователь не найден'));
       }
       return res.send({ data: user });
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: 'Передан не верный id пользователя' });
+        return next(new BadReqErr('Передан неверный id пользователя'));
       }
-      return res.status(internalServerError).send({ message: 'Внутренняя ошибка сервера' });
+      return next(err);
     });
 };
 
-const createUser = (req, res) => {
+const createUser = (req, res, next) => {
   bcrypt.hash(req.body.password, 10)
     .then((hash) => User.create({
-      email: req.body.email,
-      password: hash,
       name: req.body.name,
       about: req.body.about,
       avatar: req.body.avatar,
+      email: req.body.email,
+      password: hash,
     }))
-    .then((user) => res.send({ data: user }))
+    .then((user) => res.send({
+      name: user.name,
+      about: user.about,
+      avatar: user.avatar,
+      email: user.email,
+    }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return res.status(badRequest).send({ message: 'При создании пользователя переданы не верные данные' });
+        return next(new BadReqErr('При обновлении данных пользователя переданы неверные данные'));
       }
-      return res.status(internalServerError).send({ message: 'Внутренняя ошибка сервера' });
+      if (err.code === 11000) {
+        return next(new ConflictReqErr('Пользователь с таким email уже существует'));
+      }
+      return next(err);
     });
 };
 
-const updateUserInfo = (req, res) => {
+const updateUserInfo = (req, res, next) => {
   const { name, about } = req.body;
+
   User.findByIdAndUpdate(req.user._id, { name, about }, { runValidators: true, new: true })
-    .orFail(new Error('NotValidId'))
-    .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.message === 'NotValidId' || err.name === 'CastError') {
-        res.status(pageNotFound).send({ message: 'Пользователь с указанным id не найден' });
-      } else if (err.name === 'ValidationError') {
-        res.status(badRequest).send({ message: 'Переданы некорректные данные при обновлении профиля' });
-      } else {
-        res.status(internalServerError).send({ message: 'Внутренняя ошибка сервера' });
-      }
-    });
-};
-
-const updateUserAvatar = (req, res) => {
-  const { avatar } = req.body;
-
-  User.findByIdAndUpdate(req.user._id, { avatar }, { runValidators: true, new: true })
-    .orFail(new Error('NotValidId'))
-    .then((user) => res.send({ data: user }))
-    .catch((err) => {
-      if (err.message === 'NotValidId' || err.name === 'CastError') {
-        res.status(pageNotFound).send({ message: 'Пользователь с указанным id не найден' });
-      } else if (err.name === 'ValidationError') {
-        res.status(badRequest).send({ message: 'Переданы некорректные данные при обновлении профиля' });
-      } else {
-        res.status(internalServerError).send({ message: 'Внутренняя ошибка сервера' });
-      }
-    });
-};
-
-const login = (req, res) => {
-  const { email, password } = req.body;
-
-  User.findOne({ email }).select('+password')
     .then((user) => {
       if (!user) {
-        return Promise.reject(new Error('Неправильные почта или пароль'));
-      }
-      return bcrypt.compare(password, user.password)
-        .then((matched) => {
-          if (!matched) {
-            return Promise.reject(new Error('Неправильные почта или пароль'));
-          }
-
-          const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
-          return res.send({ token });
-        });
-    })
-    .catch(() => {
-      res.status(authorizationError).send({ message: 'Неправильные почта или пароль' });
-    });
-};
-
-const getCurrentUser = (req, res) => {
-  const { _id } = req.user;
-  User.findById(_id)
-    .then((user) => {
-      if (!user) {
-        return res.status(pageNotFound).send({ message: 'Пользователь с указанным id не найден' });
+        return next(new PageNotFound('Пользователь не найден'));
       }
       return res.send({ data: user });
     })
     .catch((err) => {
-      if (err.name === 'CastError') {
-        return res.status(badRequest).send({ message: 'Пользователь с указанным id не найден' });
+      if (err.name === 'ValidationError') {
+        return next(new BadReqErr('При обновлении данных пользователя переданы неверные данные'));
       }
-      return res.status(internalServerError).send({ message: 'Внутренняя ошибка сервера' });
+      return next(err);
     });
+};
+
+const updateUserAvatar = (req, res, next) => {
+  const { avatar } = req.body;
+
+  User.findByIdAndUpdate(req.user._id, { avatar }, { new: true })
+    .then((user) => {
+      if (!user) {
+        return next(new PageNotFound('Пользователь не найден'));
+      }
+      return res.send({ data: user });
+    })
+    .catch((err) => {
+      if (err.name === 'ValidationError') {
+        return next(new BadReqErr('При обновлении данных пользователя переданы неверные данные'));
+      }
+      return next(err);
+    });
+};
+
+const login = (req, res, next) => {
+  const { email, password } = req.body;
+
+  User.findUserByCredentials(email, password)
+    .then((user) => {
+      const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
+      res.send({ token });
+    })
+    .catch(() => next(new AuthErr('Неправильные почта или пароль')));
+};
+
+const getCurrentUser = (req, res, next) => {
+  User.findById(req.user._id)
+    .then((user) => {
+      if (!user) {
+        return next(new PageNotFound('Пользователь не найден'));
+      }
+      return res.send({ data: user });
+    })
+    .catch((err) => next(err));
 };
 
 module.exports = {
