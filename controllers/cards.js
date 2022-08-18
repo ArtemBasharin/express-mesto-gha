@@ -1,4 +1,4 @@
-const BadRequest = require('../errors/BadReqErr');
+const BadReqErr = require('../errors/BadReqErr');
 const PageNotFound = require('../errors/PageNotFound');
 const ForbidErr = require('../errors/ForbidErr');
 
@@ -18,7 +18,7 @@ const postCard = (req, res, next) => {
     .then((card) => res.send({ data: card }))
     .catch((err) => {
       if (err.name === 'ValidationError') {
-        return next(new BadRequest('Данные новой карточки невалидны'));
+        return next(new BadReqErr('Данные новой карточки невалидны'));
       }
       return next(err);
     });
@@ -39,7 +39,7 @@ const deleteCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequest('Передан некорректный id карточки'));
+        return next(new BadReqErr('Передан некорректный id карточки'));
       }
       return next(err);
     });
@@ -55,7 +55,7 @@ const likeCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequest('Передан некорректный id карточки'));
+        return next(new BadReqErr('Передан некорректный id карточки'));
       }
       return next(err);
     });
@@ -71,7 +71,7 @@ const dislikeCard = (req, res, next) => {
     })
     .catch((err) => {
       if (err.name === 'CastError') {
-        return next(new BadRequest('Передан некорректный id карточки'));
+        return next(new BadReqErr('Передан некорректный id карточки'));
       }
       return next(err);
     });

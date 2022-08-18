@@ -25,7 +25,7 @@ app.use(errHandler);
 app.post('/signin', validateLogin, login);
 app.post('/signup', validateUser, createUser);
 
-app.use('/', (_, __, next) => {
+app.use('/', (req, res, next) => {
   next(new PageNotFound('Страница не найдена'));
 });
 
