@@ -3,6 +3,7 @@ const express = require('express');
 const mongoose = require('mongoose');
 
 const { errors } = require('celebrate');
+const helmet = require('helmet');
 const usersRouter = require('./routes/users');//
 const cardsRouter = require('./routes/cards');//
 const auth = require('./middlewares/auth');
@@ -18,18 +19,17 @@ const app = express();
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(express.json());
-app.use(usersRouter);
-app.use(cardsRouter);
-app.use(auth);
-app.use(errors());
-app.use(errHandler);
+app.use(helmet());
 app.post('/signin', validateLogin, login);
 app.post('/signup', validateUser, createUser);
-
+app.use(auth);
+app.use(usersRouter);
+app.use(cardsRouter);
 app.use('/', (req, res, next) => {
   next(new PageNotFound('Страница не найдена'));
 });
-
+app.use(errors());
+app.use(errHandler);
 app.listen(PORT, () => {
   // eslint-disable-next-line no-console
   console.log(`App listening on port ${PORT}`);
