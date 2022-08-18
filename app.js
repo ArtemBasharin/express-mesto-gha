@@ -1,7 +1,7 @@
 /* eslint-disable no-unused-vars */
 const express = require('express');
 const mongoose = require('mongoose');
-const helmet = require('helmet');
+
 const { errors } = require('celebrate');
 const usersRouter = require('./routes/users');//
 const cardsRouter = require('./routes/cards');//
@@ -18,14 +18,13 @@ const app = express();
 mongoose.connect('mongodb://localhost:27017/mestodb');
 
 app.use(express.json());
-app.use(errors());
-app.use(helmet());
-app.post('/signin', validateLogin, login);
-app.post('/signup', validateUser, createUser);
-app.use(auth);
 app.use(usersRouter);
 app.use(cardsRouter);
+app.use(auth);
+app.use(errors());
 app.use(errHandler);
+app.post('/signin', validateLogin, login);
+app.post('/signup', validateUser, createUser);
 
 app.use('/', (req, res, next) => {
   next(new PageNotFound('Страница не найдена'));
