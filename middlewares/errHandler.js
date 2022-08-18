@@ -1,7 +1,7 @@
 /* eslint-disable linebreak-style */
 const errorsHandler = (err, req, res, next) => {
   const { statusCode = 500, message } = err;
-
+console.log(statusCode);
   res
     .status(statusCode)
     .send({
