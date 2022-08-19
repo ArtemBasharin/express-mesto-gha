@@ -96,10 +96,13 @@ const login = (req, res, next) => {
   const { email, password } = req.body;
   User.findUserByCredentials(email, password)
     .then((user) => {
+      if (!user) {
+        throw new AuthErr('Неправильные почта или пароль');
+      }
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
       res.send({ token });
     })
-    .catch(() => next(new AuthErr('Неправильные почта или пароль')));
+    .catch(next);
 };
 
 const getCurrentUser = (req, res, next) => {
