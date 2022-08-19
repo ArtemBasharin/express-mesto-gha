@@ -1,3 +1,4 @@
+/* eslint-disable indent */
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
 
@@ -95,11 +96,17 @@ const updateUserAvatar = (req, res, next) => {
 const login = (req, res, next) => {
   const { email, password } = req.body;
   User.findUserByCredentials(email, password)
+  .then((user) => {
+    if (!user) {
+      return next(new AuthErr('Неправильные почта или пароль'));
+    }
+    return res.send({ data: user });
+  })
     .then((user) => {
       const token = jwt.sign({ _id: user._id }, 'some-secret-key', { expiresIn: '7d' });
       res.send({ token });
     })
-    .catch(() => next(new AuthErr('Неправильные почта или пароль')));
+    .catch((err) => next(err));
 };
 
 const getCurrentUser = (req, res, next) => {
