@@ -33,8 +33,8 @@
 ---
 ## *Используемые технологии:*
 
-* NodeJS
-* Express
+* Node.js
+* Express.js
 * MongoDB
 * Mongoose
 ---
